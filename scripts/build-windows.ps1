@@ -50,13 +50,13 @@ try {
         '-B', '-m', 'PyInstaller', '--noconfirm', '--clean', '--onedir', '--console',
         '--name', 'ArchitecturePractice', '--distpath', (Join-Path $resolvedOutput 'pyinstaller-dist'),
         '--workpath', $work, '--specpath', $work,
-        '--add-data', 'index.html;.',
-        '--add-data', 'data/api.json;data',
-        '--add-data', 'data/integration.json;data',
-        '--add-data', 'data/design.json;data',
-        '--add-data', 'data/micro.json;data',
+        '--add-data', "$(Join-Path $repo 'index.html');.",
+        '--add-data', "$(Join-Path $repo 'data/api.json');data",
+        '--add-data', "$(Join-Path $repo 'data/integration.json');data",
+        '--add-data', "$(Join-Path $repo 'data/design.json');data",
+        '--add-data', "$(Join-Path $repo 'data/micro.json');data",
         '--hidden-import', 'requirements_backend', '--hidden-import', 'scenarios',
-        'launcher.py'
+        (Join-Path $repo 'launcher.py')
     )
     & $python.Source @pyArgs
     if ($LASTEXITCODE -ne 0) { throw "PyInstaller build failed ($LASTEXITCODE)." }
