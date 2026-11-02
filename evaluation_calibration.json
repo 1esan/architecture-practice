@@ -1,0 +1,42 @@
+[
+  {
+    "name": "weak-evidence-only",
+    "criterion": {"id":"consistency","label":"Согласованность","publicExpectation":"Сохранить целостность операции при повторе","severity":"major","factIds":[],"active":true},
+    "answer": "Добавим retry и вернём 200.",
+    "grading_guidance": "Наличие слов retry и 200 само по себе не доказывает корректность. Спросить, как повтор распознаётся и как клиент получает исходный результат. Оценка низкая, обратная связь должна назвать этот причинный пробел.",
+    "expected_score": {"min":0,"max":1},
+    "evaluation_context": "A client submits a command. The response can be lost and a retry must not repeat the effect. No operation-key format or retention period has been specified."
+  },
+  {
+    "name": "strong-reasoned",
+    "criterion": {"id":"consistency","label":"Согласованность","publicExpectation":"Сохранить целостность операции при повторе","severity":"major","factIds":[],"active":true},
+    "answer": "Клиент передаёт operation key. Сервер атомарно сохраняет ключ вместе с результатом; повтор с тем же ключом возвращает тот же результат, а другое тело отклоняется.",
+    "grading_guidance": "Рассуждение покрывает связь ключа и результата, атомарность и конфликт другого содержимого. Не требовать конкретную БД или числовое окно, если оно не раскрыто.",
+    "expected_score": {"min":3,"max":4},
+    "evaluation_context": "A client submits a command. The response can be lost and a retry must not repeat the effect. No operation-key format or retention period has been specified."
+  },
+  {
+    "name": "contradictory-claims",
+    "criterion": {"id":"consistency","label":"Согласованность","publicExpectation":"Сохранить целостность операции при повторе","severity":"major","factIds":[],"active":true},
+    "answer": "Сохраняем ключ до ответа. Повтор тот же результат не возвращает: операция запускается заново.",
+    "grading_guidance": "Две явные несовместимые формулировки: повтор не должен запускать операцию снова, несмотря на наличие ключа. Привести цитаты и объяснить влияние.",
+    "expected_score": {"min":0,"max":1},
+    "evaluation_context": "A client submits a command. The response can be lost and a retry must not repeat the effect. No operation-key format or retention period has been specified."
+  },
+  {
+    "name": "reasonable-alternative",
+    "criterion": {"id":"consistency","label":"Согласованность","publicExpectation":"Сохранить целостность операции при повторе","severity":"major","factIds":[],"active":true},
+    "answer": "Клиент генерирует operation ID перед первой отправкой и сохраняет его для всех повторов этой команды. Сервер атомарно сохраняет ID вместе с результатом. Клиент опрашивает состояние; завершённый результат повторно доступен по тому же ID.",
+    "grading_guidance": "Это допустимая архитектурная альтернатива при объяснённом пути получения результата. Клиентский ID при создании и повторном использовании закрывает защиту от повторного эффекта. Не штрафовать за отличие от эталонной схемы.",
+    "expected_score": {"min":3,"max":4},
+    "evaluation_context": "A client submits a command. The response can be lost and a retry must not repeat the effect. No operation-key format or retention period has been specified."
+  },
+  {
+    "name": "unrevealed-fact-does-not-apply",
+    "criterion": {"id":"window","label":"Период повторов","publicExpectation":"Определить период хранения ключа","severity":"minor","factIds":["retry-window"],"active":false},
+    "answer": "Ключ хранится столько, сколько нужно для восстановления результата.",
+    "grading_guidance": "Период зависит от закрытой вводной. Критерий должен быть null и не влиять на общий балл, пока retry-window не раскрыт.",
+    "expected_score": {"inactive":true},
+    "evaluation_context": "A retry retention period exists as a hidden case fact, but it has not been disclosed to the learner."
+  }
+]
