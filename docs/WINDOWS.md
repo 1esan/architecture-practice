@@ -22,8 +22,10 @@ py -3 -B launcher.py
 
 To choose a different local port, pass `--port`, for example `py -3 -B launcher.py --port 9123`. The same port must be available to the app. If it is occupied by another program, the launcher reports the conflict and leaves that program alone.
 
+The regular launcher leaves the local server running after it opens the browser. To run it in the foreground and stop it with Ctrl+C, use `py -3 -B launcher.py --serve` (add `--port 9123` to choose a port). To stop a server started by double-clicking the app, use Task Manager to end that `ArchitecturePractice.exe` process.
+
 ## Optional local AI adapter
 
-The app works without an AI adapter. To use AI review, configure the compatible local adapter as described in the main README. Keep its key in a local file; do not put keys in the release folder, source control, or screenshots. Windows users can set `TRAINER_ADAPTER_KEY_FILE` to the key file's path and `TRAINER_ADAPTER_URL` to the adapter's loopback address in their environment before starting the app. The adapter URL must remain on the local computer.
+The app works without an AI adapter. To use AI review, configure the compatible local adapter as described in the main README. By default, the key file is `%LOCALAPPDATA%\ArchitecturePractice\adapter-key`. Keep the key in a local file; do not put it in the release folder, source control, or screenshots. Windows users can set `TRAINER_ADAPTER_KEY_FILE` to another key file path and `TRAINER_ADAPTER_URL` to the adapter's loopback address in their environment before starting the app. The adapter URL must remain on the local computer.
 
 The app stores user data separately from the packaged application files so Windows does not need to grant write access to the install or extraction folder. Do not expose the local server through a public network address or tunnel.
