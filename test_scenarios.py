@@ -15,7 +15,7 @@ s=importlib.util.module_from_spec(spec);spec.loader.exec_module(s)
 class ScenariosTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.cards=[c for name in ('api','integration','design','micro') for c in json.loads((ROOT/'data'/f'{name}.json').read_text())]
+        cls.cards=[c for name in ('api','integration','design','micro') for c in json.loads((ROOT/'data'/f'{name}.json').read_text(encoding='utf-8'))]
 
     def test_every_card_has_valid_private_context(self):
         self.assertEqual(len(self.cards),216)
@@ -32,7 +32,7 @@ class ScenariosTests(unittest.TestCase):
             self.assertNotIn('privateContext',public)
             self.assertEqual(public['facts'],c['facts'])
             self.assertNotIn('ctx-actors',json.dumps(public,ensure_ascii=False))
-        source=(ROOT/'index.html').read_text()
+        source=(ROOT/'index.html').read_text(encoding='utf-8')
         bank=json.loads(source.split('const BANK=',1)[1].split(';</script>',1)[0])
         self.assertEqual(len(bank),216)
         self.assertTrue(all('privateContext' not in c for c in bank))

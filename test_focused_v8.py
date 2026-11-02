@@ -45,7 +45,7 @@ class FocusedTests(unittest.TestCase):
 class FocusedContentRegressions(unittest.TestCase):
  def card(self,id):
   for file in ['api','integration','micro']:
-   for c in json.loads(pathlib.Path(__file__).with_name('data').joinpath(file+'.json').read_text()):
+   for c in json.loads(pathlib.Path(__file__).with_name('data').joinpath(file+'.json').read_text(encoding='utf-8')):
     if c['id']==id:return c
   self.fail(id)
  def test_range_download_matches_3gb_file_and_http_semantics(self):
@@ -63,7 +63,7 @@ class FocusedContentRegressions(unittest.TestCase):
   self.assertIn('2026-11-02T10:00:00Z',ref);self.assertIn('2026-11-02T10:10:00Z',ref)
  def test_micro_scope_is_short_and_dossiers_have_no_service_placeholders(self):
   for file in ['api','integration','micro']:
-   for c in json.loads(pathlib.Path(__file__).with_name('data').joinpath(file+'.json').read_text()):
+   for c in json.loads(pathlib.Path(__file__).with_name('data').joinpath(file+'.json').read_text(encoding='utf-8')):
     if c['pool'] not in ['api','integration']:continue
     if c.get('format')=='micro':self.assertLessEqual(len(c['deliverables']),3,c['id'])
     for a in c['privateContext']['areas']:

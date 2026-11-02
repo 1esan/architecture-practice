@@ -16,4 +16,10 @@ class PublicConfigTests(unittest.TestCase):
  def test_no_private_desktop_key_default(self):
   r=self.run_server_import(TRAINER_ADAPTER_URL='http://127.0.0.1:8766')
   self.assertEqual(r.returncode,0,r.stderr)
-  if 'TRAINER_ADAPTER_KEY_FILE' not in os.environ:self.assertIn(str(ROOT/'.state/adapter-key'),r.stdout)
+  if 'TRAINER_ADAPTER_KEY_FILE' not in os.environ:self.assertIn(str(pathlib.Path(os.environ.get('ARCH_TRAINER_STATE_DIR',str(ROOT/'.state')))/'adapter-key'),r.stdout)
+
+ def test_custom_resource_and_state_roots(self):
+  with tempfile.TemporaryDirectory() as temp:
+   state=pathlib.Path(temp)/'state'
+   r=self.run_server_import(ARCH_TRAINER_RESOURCE_DIR=str(ROOT),ARCH_TRAINER_STATE_DIR=str(state),TRAINER_ADAPTER_KEY_FILE=str(state/'adapter-key'),TRAINER_ADAPTER_URL='http://127.0.0.1:8766')
+   self.assertEqual(r.returncode,0,r.stderr);self.assertIn(str(state/'adapter-key'),r.stdout)

@@ -2,7 +2,7 @@
 import json,pathlib,unittest
 import scenarios
 ROOT=pathlib.Path(__file__).resolve().parent
-CARDS={c['id']:c for p in (ROOT/'data').glob('*.json') for c in json.loads(p.read_text())}
+CARDS={c['id']:c for p in (ROOT/'data').glob('*.json') for c in json.loads(p.read_text(encoding='utf-8'))}
 def dossier(cid):return ' '.join(a['answer'] for a in CARDS[cid]['privateContext']['areas'])
 def facts(cid):return ' '.join(f['answer'] for f in CARDS[cid]['facts'])
 class ContextQualityRegressions(unittest.TestCase):

@@ -19,7 +19,7 @@ for path in files:
  rel=path.relative_to(ROOT);parts=rel.parts
  if any(x in {'.state','backups','secrets','exports'} for x in parts) or path.suffix in {'.sqlite','.sqlite3','.db','.log','.pem','.key'} or (path.name.startswith('.env') and path.name!='.env.example') or path.name=='adapter-key':
   problems.append((str(rel),'runtime data or secret file'));continue
- try:text=path.read_text()
+ try:text=path.read_text(encoding='utf-8')
  except (UnicodeError,OSError):continue
  for label,pattern in patterns.items():
   if pattern.search(text):problems.append((str(rel),label))
