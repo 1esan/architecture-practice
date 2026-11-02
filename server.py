@@ -1,5 +1,6 @@
 """Loopback-only trainer, SQLite state and local GPT adapter. Standard library only."""
 import base64, copy, datetime, re, struct, concurrent.futures, hashlib, http.server, json, os, pathlib, sqlite3, threading, time, uuid, urllib.request, urllib.error, urllib.parse, logging, traceback, socket
+from contextlib import contextmanager
 import requirements_backend as requirements_backend
 import scenarios
 ROOT=pathlib.Path(os.environ.get('ARCH_TRAINER_RESOURCE_DIR',str(pathlib.Path(__file__).resolve().parent)))
@@ -27,8 +28,15 @@ if not DIAGNOSTICS.handlers:
     DIAGNOSTICS.addHandler(_diagnostic_handler)
     DIAGNOSTICS.setLevel(logging.ERROR)
     DIAGNOSTICS.propagate=False
+@contextmanager
 def connect():
-    db=sqlite3.connect(DB,timeout=10);db.row_factory=sqlite3.Row;return db
+    db=sqlite3.connect(DB,timeout=10)
+    db.row_factory=sqlite3.Row
+    try:
+        with db:
+            yield db
+    finally:
+        db.close()
 def init():
     DB.parent.mkdir(parents=True,exist_ok=True)
     with connect() as db:
