@@ -39,7 +39,7 @@ class EvaluationV3Tests(unittest.TestCase):
         with self.assertRaises(ValueError):m.validate_review(result,card,answer)
 
     def test_calibration_cases_are_manual_guidance_not_model_ground_truth(self):
-        cases=json.loads((ROOT/'evaluation_calibration.json').read_text())
+        cases=json.loads((ROOT/'evaluation_calibration.json').read_text(encoding='utf-8'))
         self.assertEqual({x['name'] for x in cases},{'weak-evidence-only','strong-reasoned','contradictory-claims','reasonable-alternative','unrevealed-fact-does-not-apply'})
         self.assertTrue(all('grading_guidance' in x and 'expected_score' in x and 'evaluation_context' in x for x in cases))
 
@@ -59,7 +59,7 @@ class EvaluationV3Tests(unittest.TestCase):
 
     def test_calibration_does_not_leak_manual_expected_labels(self):
         import calibrate_evaluator as runner
-        case=json.loads((ROOT/'evaluation_calibration.json').read_text())[0]
+        case=json.loads((ROOT/'evaluation_calibration.json').read_text(encoding='utf-8'))[0]
         payload=json.loads(runner.build_messages(case)[1]['content'])
         for name in ('grading_guidance','expected_score','expected_behavior','name'):
             self.assertNotIn(name,payload)
@@ -71,7 +71,7 @@ class EvaluationV3Tests(unittest.TestCase):
             with self.subTest(ids=ids),self.assertRaises(ValueError):m.validate_question_result({'answer':'Условие уточнено.','factIds':ids},card)
 
     def test_live_calibration_runner_is_opt_in_and_payload_is_single_criterion(self):
-        cases=json.loads((ROOT/'evaluation_calibration.json').read_text())
+        cases=json.loads((ROOT/'evaluation_calibration.json').read_text(encoding='utf-8'))
         self.assertEqual(len(cases),5)
         for case in cases:
             msgs=cal.build_messages(case)

@@ -2,10 +2,11 @@
 import base64, copy, datetime, re, struct, concurrent.futures, hashlib, http.server, json, os, pathlib, sqlite3, threading, time, uuid, urllib.request, urllib.error, urllib.parse, logging, traceback, socket
 import requirements_backend as requirements_backend
 import scenarios
-ROOT=pathlib.Path(__file__).resolve().parent
-DB=pathlib.Path(os.environ.get('ARCH_TRAINER_DB',str(ROOT/'.state/practice.sqlite3')))
+ROOT=pathlib.Path(os.environ.get('ARCH_TRAINER_RESOURCE_DIR',str(pathlib.Path(__file__).resolve().parent)))
+STATE=pathlib.Path(os.environ.get('ARCH_TRAINER_STATE_DIR',str(ROOT/'.state')))
+DB=pathlib.Path(os.environ.get('ARCH_TRAINER_DB',str(STATE/'practice.sqlite3')))
 MODEL=os.environ.get('TRAINER_MODEL','gpt-6-luna')
-KEY=pathlib.Path(os.environ.get('TRAINER_ADAPTER_KEY_FILE',str(ROOT/'.state/adapter-key')))
+KEY=pathlib.Path(os.environ.get('TRAINER_ADAPTER_KEY_FILE',str(STATE/'adapter-key')))
 PORT=int(os.environ.get('ARCH_TRAINER_PORT','8784'))
 ADAPTER_URL=os.environ.get('TRAINER_ADAPTER_URL','http://127.0.0.1:8766').rstrip('/')
 _adapter_parts=urllib.parse.urlsplit(ADAPTER_URL)
@@ -15,7 +16,7 @@ if (_adapter_parts.scheme not in ('http','https') or _adapter_parts.hostname not
 POOL=concurrent.futures.ThreadPoolExecutor(max_workers=2)
 BANK={}
 for p in (ROOT/'data').glob('*.json'):
-    for c in json.loads(p.read_text()): BANK[c['id']]=scenarios.expanded_card(c)
+    for c in json.loads(p.read_text(encoding='utf-8')): BANK[c['id']]=scenarios.expanded_card(c)
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self,*a,**k): return None
 OPENER=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
@@ -34,7 +35,7 @@ def init():
         db.executescript('CREATE TABLE IF NOT EXISTS state(id INTEGER PRIMARY KEY,revision INTEGER NOT NULL,body TEXT NOT NULL); CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY,digest TEXT NOT NULL,status TEXT NOT NULL,request TEXT NOT NULL,result TEXT,error TEXT,created REAL NOT NULL);')
         db.execute("UPDATE jobs SET status='failed',error='Сервер перезапущен во время проверки. Исход вызова неизвестен. Повторите вручную.' WHERE status='running'")
 def adapter(path,payload=None,timeout=5):
-    key=KEY.read_text().strip()
+    key=KEY.read_text(encoding='utf-8').strip()
     if not key or '\n' in key or '\r' in key: raise ValueError('Не настроен ключ адаптера')
     req=urllib.request.Request(ADAPTER_URL+path,data=None if payload is None else json.dumps(payload,ensure_ascii=False).encode(),headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'})
     with OPENER.open(req,timeout=timeout) as r:
@@ -469,9 +470,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self.send(404,{'error':'Не найдено'})
         except (ValueError,KeyError,TypeError): return self.send(400,{'error':'Некорректный запрос'})
         except Exception: return self.send(500,{'error':'Не удалось сохранить данные. Скачайте резервную копию.'})
+def run():
+    httpd=http.server.ThreadingHTTPServer(('127.0.0.1',PORT),Handler)
+    try:
+        init()
+        print(f'Local: http://127.0.0.1:{PORT}',flush=True)
+        try: httpd.serve_forever()
+        except KeyboardInterrupt: pass
+    finally:
+        httpd.server_close();POOL.shutdown(wait=False)
+
 if __name__=='__main__':
-    server=http.server.ThreadingHTTPServer(('127.0.0.1',PORT),Handler);init()
-    print(f'Local: http://127.0.0.1:{PORT}',flush=True)
-    try: server.serve_forever()
-    except KeyboardInterrupt: pass
-    finally: server.server_close();POOL.shutdown(wait=False)
+    run()

@@ -32,3 +32,11 @@ coverage/
 exports/
 Архитектурная-практика-*.json
 Черновик-*.txt
+
+# Windows packaging output
+dist/
+build/
+*.spec
+*.zip
+
+dist-windows/

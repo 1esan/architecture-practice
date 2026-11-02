@@ -1,5 +1,6 @@
 """Opt-in, isolated live calibration calls; writes only the calibration report."""
 import argparse
+import tempfile
 import concurrent.futures
 import datetime
 import json
@@ -66,7 +67,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run',action='store_true',help='make live calls to the configured local adapter')
     parser.add_argument('--case',action='append',dest='case_names',help='run only named sample(s)')
-    parser.add_argument('--report',type=pathlib.Path,help='report path (default: a timestamped file under /private/tmp)')
+    parser.add_argument('--report',type=pathlib.Path,help='report path (default: a timestamped file in the system temporary directory)')
     args=parser.parse_args()
     if not args.run:
         parser.error('live calls are opt-in; pass --run to execute calibration')
@@ -76,7 +77,7 @@ def main():
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
         results=list(pool.map(run_one,cases))
     report={'kind':'isolated-rubric-calibration','createdAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'model':server.MODEL,'sampleCount':len(results),'passedCount':sum(bool(r['passed']) for r in results),'results':results,'limitation':'Small hand-authored calibration set; not a measure of general grading accuracy.'}
-    path=args.report or pathlib.Path('/private/tmp')/('architecture-practice-calibration-'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S')+'.json')
+    path=args.report or pathlib.Path(tempfile.gettempdir())/('architecture-practice-calibration-'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S')+'.json')
     path=path.expanduser().resolve()
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
