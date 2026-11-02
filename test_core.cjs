@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict'),C=require('./core.js');
+const bank=['api','integration','design'].flatMap(pool=>Array.from({length:3},(_,i)=>({id:pool+i,pool,title:pool+i})));
+let s=C.initial(),date='2026-11-01';
+assert.deepEqual(C.plan(bank,s,date),C.plan(bank,s,date));
+assert.equal(new Set(C.plan(bank,s,date)).size,3);
+assert.equal(new Set(C.plan(bank,s,date).map(id=>bank.find(c=>c.id===id).pool)).size,3);
+s.settings.goal=6;assert.equal(C.plan(bank,s,date).length,3);assert.equal(C.plan(bank,s,'2026-11-02').length,6);
+s.attempts=[{id:'1',cardId:'api0',day:date,created:date,answer:'пример',source:'ai',score:20}];
+assert.equal(C.due(bank[0],s,date),'2026-11-02');assert.equal(C.streak(s,date),1);assert.equal(C.streak(s,'2026-11-02'),1);assert.equal(C.streak(s,'2026-11-03'),0);
+assert.equal(C.score([{score:4},{score:2},{score:null}]),75);assert.equal(C.score([{score:null}]),null);
+assert.equal(C.checks('```json\n{"a":}\n```').invalidJson,1);assert.equal(C.checks('POST /orders').endpoints,1);
+assert.throws(()=>C.validate({...s,attempts:[{}]}));assert.equal(C.shift('2026-10-31',1),'2026-11-01');assert.equal(C.shift('2028-02-28',1),'2028-02-29');
+assert(C.report(s,bank,date).includes('ИИ-проверка'));console.log('Core: plan, coverage, stable day, due dates, streak, score, formal checks, import guards, report PASS');
+let empty=C.initial();assert.equal(C.validate(empty).version,1);
+let invalidDate={...C.initial(),plans:{'2026-02-31':['api-001']}};assert.throws(()=>C.validate(invalidDate));
+let hostile={...C.initial(),drafts:{'api-001':{answer:'x',revealed:[],clarifications:[],mode:'quick',twist:false,lastReview:{summary:'x',criteria:Array.from({length:5},()=>({id:'same',score:4,evidence:'x',feedback:'x'})),strengths:[],nextSteps:[]}}}};assert.throws(()=>C.validate(hostile));
+let rotated=new Set();for(let i=0;i<3;i++){let x=C.initial();x.settings.goal=1;let id=C.plan(bank,x,C.shift('2026-11-01',i))[0];rotated.add(bank.find(c=>c.id===id).pool);}assert.equal(rotated.size,3);
+console.log('Regression: impossible dates, duplicate criteria, one-card daily rotation PASS');

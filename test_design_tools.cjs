@@ -1,0 +1,20 @@
+'use strict';
+const assert=require('node:assert/strict'),D=require('./design-tools.js'),C=require('./core.js');
+const t=D.fresh();D.validate(t);let r=D.calculate(t.capacity);assert.equal(r.metrics.length,0);assert.equal(r.errors.length,0);
+Object.assign(t.capacity,{requestsPerDay:'86400',peakFactor:'10',latencyMs:'250',eventBytes:'1000',retentionDays:'10',replicas:'3',overhead:'2',arrivalRps:'10',serviceRps:'30',outageMinutes:'2'});
+r=D.calculate(t.capacity);const metric=k=>r.metrics.find(x=>x.key===k)?.value;
+assert.equal(metric('avg'),1);assert.equal(metric('peak'),10);assert.equal(metric('concurrency'),.25);assert.equal(metric('storage'),5.184);assert.equal(metric('backlog'),1200);assert.equal(metric('drain'),60);
+t.capacity.serviceRps='10';assert.ok(D.calculate(t.capacity).errors.some(x=>x.includes('не разгрузится')));
+t.capacity.serviceRps='9';assert.ok(D.calculate(t.capacity).errors.some(x=>x.includes('не разгрузится')));
+t.capacity.arrivalRps='0';assert.equal(D.calculate(t.capacity).metrics.find(x=>x.key==='drain').value,0);
+for(const [k,v] of [['replicas','1.5'],['peakFactor','0'],['overhead','-1'],['eventBytes','Infinity'],['latencyMs','foo']]){const c={...D.fresh().capacity,[k]:v};assert.equal(D.calculate(c).errors.length,1);}
+assert.equal(D.calculate({...D.fresh().capacity,requestsPerDay:'86400',peakFactor:'1,5'}).metrics.find(x=>x.key==='peak').value,1.5);
+const diagram={nodes:[{id:'a',label:'Order',type:'service'},{id:'b',label:'DB',type:'store'},{id:'c',label:'Partner',type:'external'}],edges:[{id:'e1',from:'a',to:'b',label:'write'},{id:'e2',from:'a',to:'c',label:'REST'}]};
+t.nodes={b:{owner:'Another',trust:'internal',failureDomain:'zone1'},c:{owner:'',trust:'external',failureDomain:''}};t.edges={e1:{kind:'sync',operation:'write',data:'order'},e2:{kind:'event',operation:'notify',data:''}};
+assert.ok(D.graphChecks(diagram,D.fresh()).some(x=>x.message.includes('границе доверия')));assert.ok(D.graphChecks(diagram,D.fresh()).some(x=>x.message.includes('обозначь границу')));let checks=D.graphChecks(diagram,t);assert.ok(checks.some(x=>x.message.includes('чужие данные')));assert.ok(checks.some(x=>x.message.includes('границе доверия')));assert.ok(checks.some(x=>x.message.includes('расходится')));
+let draft={answer:'Проверяемая архитектура',revealed:[],clarifications:[],mode:'quick',twist:false,training:undefined,designTools:t};const state=C.initial();state.drafts['sys-001']=draft;C.validate(state);const restored=JSON.parse(JSON.stringify(state));C.validate(restored);assert.deepEqual(restored.drafts['sys-001'].designTools,t);
+const text=D.text({...draft,training:{diagram}});assert.ok(text.includes('Order → DB'));assert.ok(text.includes('Другой')===false);assert.ok(text.includes('Another'));assert.ok(!D.text({designTools:D.fresh()}));
+let bad=structuredClone(t);bad.edges.e1.kind='anything';assert.throws(()=>D.validate(bad));
+assert.ok(D.html({designTools:D.fresh(),training:{diagram}}).includes('data-dt-capacity="requestsPerDay"'));assert.ok(D.html({designTools:D.fresh(),training:{diagram}}).includes('data-dt-edge="e1"'));
+let d={designTools:structuredClone(t),training:{diagram:{nodes:[],edges:[]}}};D.ensure(d);assert.equal(Object.keys(d.designTools.nodes).length,0);
+console.log('Design tools: arithmetic, recovery, graph warnings, compatibility and serialization pass');
