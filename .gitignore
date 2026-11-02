@@ -1,0 +1,34 @@
+# Runtime state, user answers, prompts, adapter keys and logs
+.state/
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.log
+*.pem
+*.key
+adapter-key
+secrets/
+backups/
+# Generated local analysis
+evaluation_calibration_report.json
+# Python / tooling
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+coverage/
+# OS and editors
+.DS_Store
+.idea/
+.vscode/
+
+# Browser exports may contain private answers
+exports/
+Архитектурная-практика-*.json
+Черновик-*.txt
